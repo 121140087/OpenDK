@@ -11,7 +11,7 @@
                 "searchreplace wordcount visualblocks visualchars insertdatetime media nonbreaking",
                 "table contextmenu directionality emoticons paste textcolor code"
             ],
-            toolbar1: "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | styleselect",
+            toolbar1: " undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | styleselect",
             toolbar2: "| link unlink anchor | image media | forecolor backcolor | print preview code | fontselect fontsizeselect",
             image_advtab: true,
             content_css: [
@@ -20,7 +20,8 @@
             ],
             skin: 'tinymce-5',
             relative_urls: false,
-            remove_script_host: false
+            remove_script_host: false,
+
         });
     </script>
 @endpush

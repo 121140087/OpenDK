@@ -16,13 +16,33 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="control-label" for="isi">Isi Artikel</label>
 
-                    {!! Form::textarea('isi', null, ['class' => 'my-editor', 'placeholder' => 'Isi Artikel', 'style' => 'width: 100%; height: 750px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; padding: 10px;']) !!}
+                    <label class="control-label" for="isi">Isi Artikel</label>
+                    {!! Form::textarea('isi', null, ['class' => 'my-editor', 'id' => 'my-editor', 'placeholder' => 'Isi Artikel', 'style' => 'width: 100%; height: 750px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; padding: 10px;']) !!}
+
                     @if ($errors->has('isi'))
                         <span class="help-block" style="color:red">{{ $errors->first('isi') }}</span>
                     @endif
+
                 </div>
+                <div id="myModal" class="modals">
+                    <!-- Modal Konten -->
+                    <div class="modal-content">
+                        <span class="close-btn" id="closeModalBtn">&times;</span>
+                        <h2>AI Article Generator</h2>
+                        <textarea id="textareaModal" rows="3" cols="30" placeholder="Prompt" style="resize:none;"></textarea>
+                        <div id="areaResult"></div>
+                        <br>
+                        <div style="display:none;" id="resultBox">
+                            <h3>Result</h3>
+                            <p id="generateResult"></p>
+                        </div>
+                        <button id="submitBtn" type="button">Generate</button>
+                        <button id="insertBtn" type="button" style="display:none;">Insert</button>
+
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -78,9 +98,74 @@
 </div>
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/4.9.11/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/7.6.0/tinymce.min.js" referrerpolicy="origin"></script>
+
     <script>
+        const modal = document.getElementById("myModal");
+        const openModalBtn = document.getElementById("openModalBtn");
+        const submitBtn = document.getElementById("submitBtn");
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const textAreaModal = document.getElementById("textareaModal");
+        const insertBtn = document.getElementById('insertBtn');
+        const areaResult = document.getElementById('areaResult');
+        let baseUrl = {!! json_encode(url('/')) !!};
+
+        function closeModal() {
+            modal.style.display = 'none';
+            textAreaModal.value = "";
+            textAreaModal.disabled = false;
+            insertBtn.style.display = "none";
+            submitBtn.style.display = "block";
+            areaResult.innerHTML = "";
+        }
+        submitBtn.onclick = async function() {
+            submitBtn.style.display = 'none';
+            textAreaModal.disabled = true;
+            const textValue = textAreaModal.value;
+            if (textValue === "" || textValue === undefined) {
+                alert("Prompt kosong");
+                textAreaModal.disabled = false;
+                submitBtn.style.display = 'block';
+
+
+                return;
+            };
+            textAreaModal.value = "Generating..."
+            const response = await fetch(baseUrl + '/api/v1/question', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                method: 'post',
+                body: JSON.stringify({
+                    question: "buatkan saya artikel dari kata kata berikut:" +
+                        textValue,
+                })
+            });
+            result = await response.json();
+            areaResult.innerHTML = result.answer;
+            textAreaModal.value = result.answer;
+            textAreaModal.style.display = "none";
+            insertBtn.style.display = "block";
+        }
+        insertBtn.onclick = function() {
+            const textValue = textAreaModal.value;
+            const editor = tinymce.get('my-editor')
+            editor.insertContent(textValue);
+            closeModal();
+
+        }
+        closeModalBtn.onclick = function() {
+            closeModal();
+        }
+
+
+
         $(function() {
+
+
+
 
             var fileTypes = ['jpg', 'jpeg', 'png']; //acceptable file types
 
@@ -115,6 +200,7 @@
 
         var editor_config = {
             path_absolute: "/",
+            promotion: false,
             selector: "textarea.my-editor",
             plugins: [
                 "advlist autolink lists link image charmap print preview hr anchor pagebreak",
@@ -122,7 +208,7 @@
                 "insertdatetime media nonbreaking save table contextmenu directionality",
                 "emoticons template paste textcolor colorpicker textpattern"
             ],
-            toolbar: "insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link gambar media",
+            toolbar: " myCustomToolbarButton | undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link gambar media",
             relative_urls: false,
             image_caption: true,
             file_browser_callback: function(field_name, url, type, win) {
@@ -144,7 +230,25 @@
                     resizable: "yes",
                     close_previous: "no"
                 });
-            }
+            },
+            setup: function(editor) {
+                editor.ui.registry.addButton('myCustomToolbarButton', {
+                    text: 'Ai',
+                    icon: 'ai-prompt',
+                    onAction: function(editor) {
+                        const modal = document.getElementById("myModal");
+                        if (modal.style.display === "block") {
+                            modal.style.display = "none";
+                        } else {
+                            modal.style.display = "block";
+                        }
+
+
+
+                    }
+                });
+
+            },
         };
 
         tinymce.init(editor_config);

@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\PesanController;
 use App\Http\Controllers\Api\ProfilDesaController;
 use App\Http\Controllers\Api\ProgamBantuanController;
 use App\Http\Controllers\Api\SuratController;
+use App\Http\Controllers\Api\GeminiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,6 +60,8 @@ Route::group(['prefix' => 'v1', 'middleware' => 'xss_sanitization'], function ()
     /**
      * Authentication api
      */
+    Route::post('/question', [GeminiController::class, 'index']);
+
     Route::group(['prefix' => 'auth', 'controller' => AuthController::class], function () {
         Route::post('login', 'login');
         Route::post('logout', 'logout');
